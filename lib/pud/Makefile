@@ -108,7 +108,7 @@ endif
 
 default_target: nmealib library $(PLUGIN_FULLNAME)
 
-$(PLUGIN_FULLNAME): $(OBJS) version-script.txt
+$(PLUGIN_FULLNAME): $(OBJS) version-script.txt nmealib
 ifeq ($(PUD_NMEALIB_STATICALLY_LINKED),)
 ifeq ($(VERBOSE),0)
 	@echo "[LD] $@ (nmealib dynamically linked)"
@@ -128,8 +128,18 @@ install: all
 	mkdir -p "${TOPDIR}$(ETCDIR)"
 	cp "$(RESOURCESDIR)/olsrd.pud.position.conf" "${TOPDIR}$(ETCDIR)"
 	$(STRIP) "$(LIBDIR)/$(PLUGIN_FULLNAME)"
+ifneq ($(DOCDIR_OLSRD),)
+	mkdir -p "$(DOCDIR_OLSRD)"
+	cp -t "$(DOCDIR_OLSRD)" "README_PUD" "nmealib/README_NMEALIB" \
+	  "wireformat-java/README_PUD_WIREFORMAT_JAVA" "doc/pud.odt"
+endif
 
 uninstall:
+ifneq ($(DOCDIR_OLSRD),)
+	rm -f "$(DOCDIR_OLSRD)/README_PUD" "$(DOCDIR_OLSRD)/README_NMEALIB" \
+	  "$(DOCDIR_OLSRD)/README_PUD_WIREFORMAT_JAVA" "$(DOCDIR_OLSRD)/pud.odt"
+	rmdir -p --ignore-fail-on-non-empty "$(DOCDIR_OLSRD)"
+endif
 	$(MAKECMDPREFIX)$(MAKE) -C "$(NMEALIB_PATH)" DESTDIR="$(DESTDIR)" uninstall
 	$(MAKECMDPREFIX)$(MAKE) -C "$(LIBRARY_PATH)" DESTDIR="$(DESTDIR)" uninstall
 	rm -f "$(LIBDIR)/lib$(PLUGIN_NAME).so" "$(LIBDIR)/$(PLUGIN_NAME)" "$(ETCDIR)/olsrd.pud.position.conf"

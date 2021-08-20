@@ -66,6 +66,9 @@ MUDFLAP ?= 0
 # shows full compiler/linker calls if activated
 VERBOSE ?= 0
 
+# when non-zero will exclude rpath linker option
+NORPATH ?= 0
+
 SANITIZE_ADDRESS   ?= 0
 SANITIZE_LEAK      ?= 0
 SANITIZE_UNDEFINED ?= 0
@@ -108,6 +111,7 @@ STRIP ?=  :
 endif
 BISON ?=	bison
 FLEX ?=		flex
+LDCONFIG ?=	/sbin/ldconfig
 TAGCMD ?=	etags
 
 # target directories and names
@@ -250,7 +254,9 @@ ifeq ($(OS),win32)
 else 
   LDFLAGS +=	-Wl,-export-dynamic 
 endif
+ifeq ($(NORPATH),0)
 LDFLAGS +=	-Wl,-rpath,$(LIBDIR)
+endif
 endif
 # LDFLAGS for all 
 LDFLAGS +=	-Wl,--warn-common

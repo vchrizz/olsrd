@@ -44,7 +44,7 @@
 # Please also write a new version to:
 # gui/win32/Main/Frontend.rc (line 71, around "CAPTION [...]")
 # gui/win32/Inst/installer.nsi (line 57, around "MessageBox MB_YESNO [...]")
-VERS =		pre-0.9.7
+VERS =		pre-0.9.9
 
 TOPDIR = $(shell pwd)
 INSTALLOVERWRITE ?=
@@ -194,8 +194,20 @@ endif
 ifneq ($(RCDIR),)
 		cp $(RCFILE) $(RCDIR)/olsrd
 endif
+ifneq ($(DOCDIR_OLSRD),)
+		mkdir -p "$(DOCDIR_OLSRD)"
+		cp -t "$(DOCDIR_OLSRD)" "CHANGELOG" "README-Olsr-Extensions" \
+		  "README-LINUX_NL80211.txt" "files/olsrd.conf.default" \
+		  "files/olsrd.conf.default.txt" "license.txt"
+endif
 
 uninstall_olsrd:	uninstall_bin
+ifneq ($(DOCDIR_OLSRD),)
+		rm -f "$(DOCDIR_OLSRD)/CHANGELOG" "$(DOCDIR_OLSRD)/README-Olsr-Extensions" \
+		  "$(DOCDIR_OLSRD)/README-LINUX_NL80211.txt" "$(DOCDIR_OLSRD)/olsrd.conf.default" \
+		  "$(DOCDIR_OLSRD)/olsrd.conf.default.txt" "$(DOCDIR_OLSRD)/license.txt"
+		rmdir -p --ignore-fail-on-non-empty "$(DOCDIR_OLSRD)"
+endif
 ifneq ($(MANDIR),)
 		rm -f $(MANDIR)/man5/$(CFGNAME).5.gz
 		rmdir -p $(MANDIR)/man5/ || true
@@ -213,18 +225,16 @@ tags:
 		$(TAGCMD) -o $(TAGFILE) $(TAG_SRCS)
 
 rpm:
-		$(MAKECMDPREFIX)$(RM) olsrd-current.tar.bz2
-		$(MAKECMDPREFIX)echo "Creating olsrd-current.tar.bz2 ..."
-		$(MAKECMDPREFIX)./list-excludes.sh | tar  --exclude-from=- --exclude="olsrd-current.tar.bz2" -C .. -cjf olsrd-current.tar.bz2 olsrd-current
-		$(MAKECMDPREFIX)echo "Building RPMs..."
-		$(MAKECMDPREFIX)rpmbuild -ta olsrd-current.tar.bz2
+	$(MAKECMDPREFIX)$(MAKECMD) -C redhat
+
+
 #
 # PLUGINS
 #
 
 # This is quite ugly but at least it works
 ifeq ($(OS),linux)
-SUBDIRS := arprefresh bmf dot_draw dyn_gw dyn_gw_plain httpinfo info jsoninfo mdns mini nameservice netjson poprouting p2pd pgraph pud quagga secure sgwdynspeed txtinfo watchdog
+SUBDIRS := arprefresh bmf dot_draw dyn_gw dyn_gw_plain filtergw httpinfo info jsoninfo mdns mini nameservice netjson poprouting p2pd pgraph pud quagga secure sgwdynspeed txtinfo watchdog
 else
 ifeq ($(OS),win32)
 SUBDIRS := dot_draw httpinfo info jsoninfo mini netjson pgraph secure txtinfo
@@ -327,6 +337,18 @@ dyn_gw_plain_install:
 dyn_gw_plain_uninstall:
 		$(MAKECMDPREFIX)$(MAKECMD) -C lib/dyn_gw_plain DESTDIR=$(DESTDIR) uninstall
 
+filtergw:
+		$(MAKECMDPREFIX)$(MAKECMD) -C lib/filtergw
+
+filtergw_clean:
+		$(MAKECMDPREFIX)$(MAKECMD) -C lib/filtergw DESTDIR=$(DESTDIR) clean
+
+filtergw_install:
+		$(MAKECMDPREFIX)$(MAKECMD) -C lib/filtergw DESTDIR=$(DESTDIR) install
+
+filtergw_uninstall:
+		$(MAKECMDPREFIX)$(MAKECMD) -C lib/filtergw DESTDIR=$(DESTDIR) uninstall
+
 httpinfo:
 		$(MAKECMDPREFIX)$(MAKECMD) -C lib/httpinfo
 
@@ -356,6 +378,12 @@ info_java:
 
 info_java_clean:
 		$(MAKECMDPREFIX)$(MAKECMD) -C lib/info.java DESTDIR=$(DESTDIR) clean
+
+info_java_install:
+		$(MAKECMDPREFIX)$(MAKECMD) -C lib/info.java DESTDIR=$(DESTDIR) install
+
+info_java_uninstall:
+		$(MAKECMDPREFIX)$(MAKECMD) -C lib/info.java DESTDIR=$(DESTDIR) uninstall
 
 jsoninfo: info
 		$(MAKECMDPREFIX)$(MAKECMD) -C lib/jsoninfo
