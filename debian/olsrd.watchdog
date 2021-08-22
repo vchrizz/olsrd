@@ -1,0 +1,22 @@
+#!/bin/bash
+#init.d script of olsrd creates/deletes the compare file to enable/disable this watchdog
+olsrd4config=$(awk -F "-f " '/DAEMON_OPTS/{print substr($2,1,length($2)-1)}' /etc/default/olsrd)
+LOG="/tmp/olsrd.log"
+UG=$(echo $(id -un):$(id -u) "("$(id -gn):$(id -g)")")
+
+if [ $(cat $olsrd4config | cut -d "#" -f 1 | grep -c LoadPlugin.*olsrd_watchdog) \> 0 ] &&
+   [ -f /tmp/olsrd.watchdog.compare ] && [ -f /tmp/olsrd.watchdog ]; then
+  wd=$(cat /tmp/olsrd.watchdog)
+  comp=$(stat -c %Y /tmp/olsrd.watchdog.compare)
+  #test if watchdog.compare file is newer
+  if [ "$comp" ] && [ "$wd" ] && [ $(($comp -10)) \> $(($wd)) ];then
+    ot=`stat -c %y /tmp/olsrd.watchdog.compare`
+    echo $(date)": olsrd crashed/freezed (at "$(date -d @$wd)"), restarting... - "$UG >>$LOG
+    ps aux        >"/tmp/"$(date '+%Y%m%d-%H%M%S')"-processes"
+    /sbin/ip -4 r >"/tmp/"$(date '+%Y%m%d-%H%M%S')"-routesv4"
+    /etc/init.d/olsrd restart
+  fi
+fi
+#create new compare file
+touch /tmp/olsrd.watchdog.compare
+exit 0
