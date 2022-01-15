@@ -184,8 +184,8 @@ chk_if_changed(struct olsr_if *iface)
 
   /* Check broadcast */
   if ((olsr_cnf->ip_version == AF_INET) && !iface->cnf->ipv4_multicast.v4.s_addr &&     /* Skip if fixed bcast */
-      (!(ifp->int_flags & IFF_BROADCAST))) {
-    OLSR_PRINTF(3, "\tNo broadcast - removing\n");
+      ((!(ifp->int_flags & IFF_BROADCAST) && !(ifp->int_flags & IFF_POINTOPOINT)))) {
+    OLSR_PRINTF(3, "\tNo broadcast or point-to-point - removing\n");
     goto remove_interface;
   }
 
@@ -552,8 +552,8 @@ chk_if_up(struct olsr_if *iface, int debuglvl __attribute__ ((unused)))
 
   /* Check broadcast */
   if ((olsr_cnf->ip_version == AF_INET) && !iface->cnf->ipv4_multicast.v4.s_addr &&     /* Skip if fixed bcast */
-      (!(ifs.int_flags & IFF_BROADCAST))) {
-    OLSR_PRINTF(debuglvl, "\tNo broadcast - skipping\n");
+      (!(ifs.int_flags & IFF_BROADCAST) && !(ifs.int_flags & IFF_POINTOPOINT))) {
+    OLSR_PRINTF(debuglvl, "\tNo broadcast or point-to-point - skipping\n");
     return 0;
   }
 
